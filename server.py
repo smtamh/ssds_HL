@@ -63,10 +63,23 @@ def main():
         default="stdio",
         help="MCP transport type (default: stdio)"
     )
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Host to bind the MCP HTTP server"
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to bind the MCP HTTP server"
+    )
 
     args = parser.parse_args()
 
     if args.transport == "streamable-http":
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
         mcp.run(transport="streamable-http")
     else:
         mcp.run()
