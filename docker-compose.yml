@@ -1,0 +1,21 @@
+services:
+  ssds:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ssds_env
+    container_name: ssds
+    network_mode: host
+    ipc: host
+    privileged: true
+    tty: true
+    stdin_open: true
+    working_dir: /root
+    volumes:
+      - ${HOME}/ros2_ws/ssds_ws:/root/ros2_ws
+      - ${HOME}/smtamh/ssds_HL:/root/ssds_HL
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
