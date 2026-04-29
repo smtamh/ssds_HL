@@ -80,6 +80,7 @@ def main():
     if args.transport == "streamable-http":
         mcp.settings.host = args.host
         mcp.settings.port = args.port
+        mcp.settings.transport_security = None
         mcp.run(transport="streamable-http")
     else:
         mcp.run()
