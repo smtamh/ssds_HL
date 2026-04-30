@@ -24,4 +24,4 @@ SAMPLING_PARAMS  = {
     "max_tokens": 1000
 }
 
-STT_PATH = os.path.join(MODEL_DIR, "faster-whisper-small")
+STT_PATH = os.path.join(MODEL_DIR, "faster-whisper-medium")

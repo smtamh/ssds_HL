@@ -44,6 +44,39 @@ async def joint_move(
     return f"Joint move completed: left arm moved to {left_target_positions}, right arm moved to {right_target_positions}."
 
 
+async def init_pose(
+    arm_names: str = "both",
+    image=None):
+    from fr3_husky_task_manager.move_to_joint import MoveToJointClient
+
+    if arm_names not in ["left", "right", "both"]:
+        return f"Invalid arm_names value: {arm_names}"
+
+    rclpy.init()
+    node = MoveToJointClient(
+        arm=arm_names,
+        left_target_positions=[0.25, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785],
+        right_target_positions=[0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785],
+    )
+
+    try:
+        node.send_goal_and_wait()
+    except KeyboardInterrupt:
+        cancel_future = node.cancel_goal()
+        if cancel_future is not None:
+            rclpy.spin_until_future_complete(node, cancel_future, timeout_sec=2.0)
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+    if arm_names == "left":
+        return f"Init pose completed: left arm moved to the initial pose."
+    if arm_names == "right":
+        return f"Init pose completed: right arm moved to the initial pose."
+    return f"Init pose completed: both arms moved to the initial pose."
+
+
 async def gripper_command(
     arm_names: str = "both",
     command: str = "open",

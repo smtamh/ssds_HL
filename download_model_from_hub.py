@@ -4,7 +4,7 @@
 from huggingface_hub import snapshot_download
 import config, os
 
-model_id = "Systran/faster-whisper-base.en"
+model_id = "Systran/faster-whisper-medium"
 
 local_dir = os.path.join(config.MODEL_DIR, model_id.split('/')[-1])
 
@@ -18,4 +18,4 @@ model_path = snapshot_download(
 # Qwen/Qwen3-4B-AWQ
 
 # STT:
-# Systran/faster-whisper-small
+# Systran/faster-whisper-medium

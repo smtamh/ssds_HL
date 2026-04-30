@@ -29,6 +29,21 @@ async def joint_move(
 
 
 @mcp.tool()
+async def init_pose(
+    arm_names: str = "both"
+    ) -> str:
+
+    """Move the robot to the initial position
+
+    Args:
+    - arm_names: Name of the robot arm (default: "both"). Options: "left", "right", "both"
+    """
+    return await tools.init_pose(
+        arm_names.strip().lower(),
+    )
+
+
+@mcp.tool()
 async def gripper_command(
     arm_names: str = "both",
     command: str = "open",
