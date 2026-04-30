@@ -108,10 +108,12 @@ To use STT, run LLM/VLM with the following commands.
 Run `server.py` separately using the command above.
 ```
 # 1st terminal
-UV_PROJECT_ENVIRONMENT=.venv/312 uv "$@" run recognize_speech.py --server --verbose --show-level
+UV_PROJECT_ENVIRONMENT=.venv/312 uv "$@" run recognize_speech.py
 
 # 2nd terminal
 UV_PROJECT_ENVIRONMENT=.venv/312 uv "$@" run inference_stt.py --input-source speech --transport streamable-http
 ```
 
 Check MCP endpoint (e.g., http://127.0.0.1:8000/mcp) on the server side, and then use that endpoint in inference_*.py
+
+`recognize_speech.py` starts the localhost speech text server by default. Use `--no-server` to disable it.

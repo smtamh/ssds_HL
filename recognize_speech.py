@@ -395,8 +395,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--server",
-        action="store_true",
-        help="Run a localhost speech text server for inference_stt.py.",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Run a localhost speech text server for inference_stt.py. "
+            "Enabled by default; use --no-server to disable it."
+        ),
     )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
@@ -442,8 +446,7 @@ def main() -> int:
             if args.server:
                 assert server is not None
                 server.publish(text)
-            else:
-                print(text, flush=True)
+            print(text, flush=True)
         return 0
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
