@@ -1,12 +1,30 @@
-import os, json, time
-import numpy as np
-
-# ROS
 import rclpy
-from rclpy.node import Node
 
-import asyncio
-import threading
+
+def _run_apple_vision_pro(
+    disable: bool = False,
+    left_off: bool = False,
+    right_off: bool = False,
+):
+    from fr3_husky_task_manager.apple_vision_pro import AppleVisionProClient
+
+    should_shutdown = False
+    if not rclpy.ok():
+        rclpy.init()
+        should_shutdown = True
+
+    node = AppleVisionProClient(
+        disable=disable,
+        left_off=left_off,
+        right_off=right_off,
+    )
+
+    try:
+        return node.run()
+    finally:
+        node.destroy_node()
+        if should_shutdown and rclpy.ok():
+            rclpy.shutdown()
 
 
 async def joint_move(
@@ -14,22 +32,23 @@ async def joint_move(
     left_target_positions: list[float] = None,
     right_target_positions: list[float] = None,
     image=None):
-    from fr3_husky_task_manager.apple_vision_pro import run_apple_vision_pro
     from fr3_husky_task_manager.move_to_joint import run_move_to_joint
 
     if arm_names not in ["left", "right", "both"]:
         return f"Invalid arm_names value: {arm_names}"
 
-    run_apple_vision_pro(disable=True)
+    _run_apple_vision_pro(disable=True)
     try:
         run_move_to_joint(
             arm=arm_names,
             left_target_positions=left_target_positions,
             right_target_positions=right_target_positions,
         )
+    except Exception as e:
+        return f"Joint move failed: {str(e)}"
 
     finally:
-        run_apple_vision_pro(disable=False)
+        _run_apple_vision_pro(disable=False)
     
     if arm_names == "left":
         return f"Joint move completed: left arm moved to {left_target_positions}."
@@ -41,13 +60,12 @@ async def joint_move(
 async def init_pose(
     arm_names: str = "both",
     image=None):
-    from fr3_husky_task_manager.apple_vision_pro import run_apple_vision_pro
     from fr3_husky_task_manager.move_to_joint import run_move_to_joint
 
     if arm_names not in ["left", "right", "both"]:
         return f"Invalid arm_names value: {arm_names}"
 
-    run_apple_vision_pro(disable=True)
+    _run_apple_vision_pro(disable=True)
     try:
         run_move_to_joint(
             arm=arm_names,
@@ -56,7 +74,7 @@ async def init_pose(
         )
 
     finally:
-        run_apple_vision_pro(disable=False)
+        _run_apple_vision_pro(disable=False)
 
     if arm_names == "left":
         return f"Init pose completed: left arm moved to the initial pose."
@@ -72,10 +90,9 @@ async def gripper_command(
     speed: float = 0.1,
     force: float = 30.0,
     image=None):
-    from fr3_husky_task_manager.apple_vision_pro import run_apple_vision_pro
     from fr3_husky_task_manager.gripper_move import run_gripper_move
 
-    run_apple_vision_pro(disable=True)
+    _run_apple_vision_pro(disable=True)
     try:
         result = run_gripper_move(
             arm_names=arm_names,
@@ -85,6 +102,40 @@ async def gripper_command(
             force=force,
         )
     finally:
-        run_apple_vision_pro(disable=False)
+        _run_apple_vision_pro(disable=False)
 
     return result
+
+
+async def onoff_vision_pro(
+    arm_names: str = "both",
+    command: str = "on",
+    image=None
+):
+    if arm_names not in ["left", "right", "both"]:
+        return f"Invalid arm_names value: {arm_names}"
+
+    if command not in ["on", "off"]:
+        return f"Invalid command value: {command}"
+
+    if arm_names == "both":
+        if command == "on":
+            _run_apple_vision_pro(disable=False, left_off=False, right_off=False)
+        else:
+            _run_apple_vision_pro(disable=True)
+        return f"{arm_names} vision pro tracking turned {command}."
+
+    if arm_names == "left":
+        left_off = command == "off"
+        right_off = command != "off"
+    else:
+        left_off = command != "off"
+        right_off = command == "off"
+
+    _run_apple_vision_pro(
+        disable=False,
+        left_off=left_off,
+        right_off=right_off,
+    )
+
+    return f"{arm_names} vision pro tracking turned {command}."

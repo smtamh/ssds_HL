@@ -70,6 +70,24 @@ async def gripper_command(
     )
 
 
+@mcp.tool()
+async def onoff_vision_pro(
+    arm_names: str = "both",
+    command: str = "on",
+    ) -> str:
+
+    """Enable or disable Apple Vision Pro tracking per arm.
+
+    Args:
+    - arm_names: Name of the robot arm (default: "both"). Options: "left", "right", "both"
+    - command: Tracking command. Options: "on", "off"
+    """
+    return await tools.onoff_vision_pro(
+        arm_names.strip().lower(),
+        command.strip().lower(),
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
