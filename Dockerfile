@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-tf2-tools \
     ros-humble-rviz2 \
     ros-humble-v4l2-camera \
+    ros-humble-joy-linux \
     ros-dev-tools \
     libpoco-dev \
     libgtest-dev \
