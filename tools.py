@@ -91,6 +91,35 @@ async def husky_pedal():
     return "Failed to enable Husky pedal teleoperation."
 
 
+async def nut_tightening(
+    arm_name: str = "right",
+    rotation_angle: float = -60.0,
+    image=None,
+):
+    from fr3_husky_task_manager.apple_vision_pro import run_apple_vision_pro
+    from fr3_husky_task_manager.nut_tightening import run_nut_tightening
+
+    if arm_name not in ["left", "right"]:
+        return f"Invalid arm_name value: {arm_name}"
+    if abs(rotation_angle) < 60.0:
+        return "rotation_angle must be at least 60 degrees in magnitude."
+
+    if not run_apple_vision_pro(disable=True):
+        return "Nut tightening failed: unable to disable Apple Vision Pro tracking."
+
+    try:
+        return run_nut_tightening(
+            arm=arm_name,
+            rotation_angle=rotation_angle,
+        )
+    except Exception as e:
+        return f"Nut tightening failed: {str(e)}"
+    finally:
+        if rclpy.ok():
+            rclpy.shutdown()
+        run_apple_vision_pro(disable=False)
+
+
 async def gripper_command(
     arm_names: str = "both",
     command: str = "open",

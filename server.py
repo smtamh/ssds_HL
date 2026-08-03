@@ -56,6 +56,23 @@ async def enable_husky_pedal() -> str:
 
 
 @mcp.tool()
+async def nut_tightening(
+    arm_name: str = "right",
+    rotation_angle: float = -60.0,
+) -> str:
+    """Tighten the configured default nut with the specified arm.
+
+    Args:
+    - arm_name: Arm holding the spanner. Options: "left" or "right".
+    - rotation_angle: Tightening angle in degrees; negative values tighten about +Z.
+    """
+    return await tools.nut_tightening(
+        arm_name.strip().lower(),
+        rotation_angle,
+    )
+
+
+@mcp.tool()
 async def gripper_command(
     arm_names: str = "both",
     command: str = "open",
