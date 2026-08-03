@@ -44,12 +44,17 @@ class InferenceNode:
 
             if isinstance(args, str):
                 args=json.loads(args)
-            result = await mcp_client.call_tool(name, args)   
+            result = await mcp_client.call_tool(name, args)
+            # print("\n=======================================")
+            # print(result)
+            # print("=======================================\n")
+
+            result_element =  result.structuredContent['result'] if result is not None and result.structuredContent is not None else None
             results.append({
                 "id": tc.id,
                 "function": name,
                 "arguments": args,
-                "result": result.structuredContent['result']
+                "result": result_element
             })
 
         return results

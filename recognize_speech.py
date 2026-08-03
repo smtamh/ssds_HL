@@ -29,14 +29,14 @@ class SpeechConfig:
     model_path: str = config.STT_PATH
     record_backend: str = "parecord"
     mic_device: str | None = None
-    stt_device: str = "cpu"
+    stt_device: str = "cuda"
     compute_type: str = "default"       # "default": "float16" / "int8", etc.
     language: str | None = None
     beam_size: int = 5
     vad_threshold: float = 0.5
     vad_min_silence_ms: int = 1500      # after speech starts, VAD waits for about vad_min_silence_ms of silence before deciding the utterance is finished and sending it to STT.
     vad_speech_pad_ms: int = 100
-    pre_roll_ms: int = 300              # prevent VAD missing the start of speech by including some audio from before VAD triggers. This is typically set to a value slightly longer than vad_min_silence_ms to account for the fact that VAD may trigger in the middle of a silence period.
+    pre_roll_ms: int = 1800              # prevent VAD missing the start of speech by including some audio from before VAD triggers. This is typically set to a value slightly longer than vad_min_silence_ms to account for the fact that VAD may trigger in the middle of a silence period.
     min_speech_ms: int = 300            # discard speech segments shorter than this duration, which are likely to be VAD errors
     max_speech_seconds: float = 20.0    # forcibly finalize speech segments longer than this duration
     show_level: bool = True

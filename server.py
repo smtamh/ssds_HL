@@ -42,6 +42,18 @@ async def init_pose(
         arm_names.strip().lower(),
     )
 
+"""
+@mcp.tool()
+async def enable_apple_vision_pro() -> str:
+    return await tools.apple_vision_pro()
+"""
+
+
+@mcp.tool()
+async def enable_husky_pedal() -> str:
+    """Enable the Husky pedal for teleoperation."""
+    return await tools.husky_pedal()
+
 
 @mcp.tool()
 async def gripper_command(
