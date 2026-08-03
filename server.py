@@ -117,6 +117,191 @@ async def onoff_vision_pro(
     )
 
 
+
+@mcp.tool()
+async def rotate_yaw(
+    arm_names: str = "both",
+    yaw: float = 0.0,
+    ) -> str:
+
+    """ Rotate the arm only yaw direction
+
+
+    Args:
+    - arm_names: Name of the robot arm (default: "both"). Options: "left", "right", "both"
+    - yaw: rotation value (rad)
+    """
+    return await tools.rotate_yaw(
+        arm_names.strip().lower(),
+        yaw = yaw
+    )
+
+
+
+@mcp.tool()
+async def rotate_roll(
+    arm_names: str = "both",
+    roll: float = 0.0,
+    ) -> str:
+
+    """ Rotate the arm only roll direction
+
+
+    Args:
+    - arm_names: Name of the robot arm (default: "both"). Options: "left", "right", "both"
+    - roll: rotation value (rad)
+    """
+    return await tools.rotate_roll(
+        arm_names.strip().lower(),
+        roll = roll
+    )
+
+
+@mcp.tool()
+async def rotate_pitch(
+    arm_names: str = "both",
+    pitch: float = 0.0,
+    ) -> str:
+
+    """ Rotate the arm only pitch direction
+
+
+    Args:
+    - arm_names: Name of the robot arm (default: "both"). Options: "left", "right", "both"
+    - pitch: rotation value (rad)
+    """
+    return await tools.rotate_pitch(
+        arm_names.strip().lower(),
+        pitch = pitch
+    )
+
+
+@mcp.tool()
+async def move_arm_forward_backward(
+    arm_names: str = "both",
+    value: float = 0.0,
+    ) -> str:
+    """
+    Move robot arm(s) along the local x-axis direction.
+
+    Args:
+    - arm_names:
+        Target arm selection.
+        Options: "left", "right", "both"
+
+    - value:
+        Relative translation distance [m] along local x-axis.
+        Positive value  -> move forward
+        Negative value  -> move backward
+    """
+
+    return await tools.move_arm_forward_backward(
+        arm_names.strip().lower(),
+        value = value
+    )
+
+
+
+@mcp.tool()
+async def move_arm_down_up(
+    arm_names: str = "both",
+    value: float = 0.0,
+    ) -> str:
+    """
+    Move robot arm(s) along the local z-axis direction.
+
+    Args:
+    - arm_names:
+        Target arm selection.
+        Options: "left", "right", "both"
+
+    - value:
+        Relative translation distance [m] along local z-axis.
+        Positive value  -> move down
+        Negative value  -> move up
+    """
+
+    return await tools.move_arm_down_up(
+        arm_names.strip().lower(),
+        value = value
+    )
+
+
+
+@mcp.tool()
+async def move_arm_right_left(
+    arm_names: str = "both",
+    value: float = 0.0,
+    ) -> str:
+    """
+    Move robot arm(s) along the local y-axis direction.
+
+    Args:
+    - arm_names:
+        Target arm selection.
+        Options: "left", "right", "both"
+
+    - value:
+        Relative translation distance [m] along local y-axis.
+        Positive value  -> move right
+        Negative value  -> move left
+
+    """
+
+    return await tools.move_arm_right_left(
+        arm_names.strip().lower(),
+        value = value
+    )
+@mcp.tool()
+async def task_space_delta_move(
+    arm_names: str = "both",
+    left_position: list[float] | None = None,
+    left_rpy: list[float] | None = None,
+    right_position: list[float] | None = None,
+    right_rpy: list[float] | None = None,
+) -> str:
+    """
+    Move robot end-effectors by relative task-space delta poses.
+
+    Args:
+    - arm_names:
+        Target arm selection.
+        Options: "left", "right", "both"
+
+    - left_position:
+        Relative XYZ translation delta [m] for left arm.
+        Format: [x, y, z]
+        Example: [0.1, 0.0, -0.05]
+
+    - left_rpy:
+        Relative roll-pitch-yaw rotation delta [rad] for left arm.
+        Format: [roll, pitch, yaw]
+        Example: [0.0, 0.0, 1.57]
+
+    - right_position:
+        Relative XYZ translation delta [m] for right arm.
+        Format: [x, y, z]
+
+    - right_rpy:
+        Relative roll-pitch-yaw rotation delta [rad] for right arm.
+        Format: [roll, pitch, yaw]
+
+    Notes:
+    - All motions are relative to the current end-effector pose.
+    - Position unit: meters
+    - Rotation unit: radians
+    """
+    return await tools.task_space_delta_move(
+        arm_names.strip().lower(),
+        left_position=left_position,
+        left_rpy=left_rpy,
+        right_position=right_position,
+        right_rpy=right_rpy,
+    )
+
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(

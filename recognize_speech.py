@@ -19,6 +19,9 @@ from silero_vad import VADIterator, load_silero_vad
 import config
 
 
+torch.cuda.set_per_process_memory_fraction(0.4, device=0)
+
+
 SAMPLE_RATE = 16000
 VAD_CHUNK_SAMPLES = 512
 SAMPLE_WIDTH_BYTES = 2
@@ -29,18 +32,20 @@ class SpeechConfig:
     model_path: str = config.STT_PATH
     record_backend: str = "parecord"
     mic_device: str | None = None
+    # stt_device: str = "cpu"
+    # compute_type: str = "int8"       # "default": "float16" / "int8", etc.
     stt_device: str = "cuda"
-    compute_type: str = "default"       # "default": "float16" / "int8", etc.
+    compute_type: str = "float16"       # "default": "float16" / "int8", etc.
     language: str | None = None
-    beam_size: int = 5
-    vad_threshold: float = 0.5
-    vad_min_silence_ms: int = 1500      # after speech starts, VAD waits for about vad_min_silence_ms of silence before deciding the utterance is finished and sending it to STT.
+    beam_size: int = 1
+    vad_threshold: float = 0.7
+    vad_min_silence_ms: int = 800      # after speech starts, VAD waits for about vad_min_silence_ms of silence before deciding the utterance is finished and sending it to STT.
     vad_speech_pad_ms: int = 100
-    pre_roll_ms: int = 1800              # prevent VAD missing the start of speech by including some audio from before VAD triggers. This is typically set to a value slightly longer than vad_min_silence_ms to account for the fact that VAD may trigger in the middle of a silence period.
-    min_speech_ms: int = 300            # discard speech segments shorter than this duration, which are likely to be VAD errors
-    max_speech_seconds: float = 20.0    # forcibly finalize speech segments longer than this duration
+    pre_roll_ms: int = 400              # prevent VAD missing the start of speech by including some audio from before VAD trigger
+    min_speech_ms: int = 50            # discard speech segments shorter than this duration, which are likely to be VAD errors
+    max_speech_seconds: float = 10.0    # forcibly finalize speech segments longer than this duration
     show_level: bool = True
-    level_interval_ms: int = 200
+    level_interval_ms: int = 50
     verbose: bool = True
 
 
@@ -79,6 +84,11 @@ class SpeechRecognizer:
                 compute_type=self.config.compute_type,
             )
 
+    def _clear_file(self):
+        try:
+            with open(f"recognized_speech.txt", "w", encoding="utf-8") as f: f.write("") 
+        except Exception as e: pass
+
     def listen(self) -> Iterator[str]:
         self._load_models()
         assert self._vad_iterator is not None
@@ -97,6 +107,8 @@ class SpeechRecognizer:
             f"Listening with {self.config.record_backend}. "
             "Speak after VAD is ready; press Ctrl+C to stop."
         )
+        self.clear_timer = None 
+        with open(f"recognized_speech.txt", "w", encoding="utf-8") as f: f.write("") 
 
         try:
             while True:
@@ -112,7 +124,8 @@ class SpeechRecognizer:
                 chunk = self._pcm16_to_float32(raw_audio)
                 was_recording = recording
                 vad_event = self._vad_iterator(torch.from_numpy(chunk))
-                self._print_level(chunk, recording)
+                # if vad_event is not None: print(f"\n\nvad_event: {vad_event}\n", flush=True)
+                self._print_level(chunk, recording, vad_event and "end" in vad_event)
 
                 if was_recording:
                     speech_chunks.append(chunk)
@@ -124,6 +137,10 @@ class SpeechRecognizer:
                     speech_chunks = list(pre_roll)
                     pre_roll.clear()
                     self._log("Speech started")
+                    with open(f"recognized_speech.txt", "w", encoding="utf-8") as f:  f.write(f"...Listening...")
+                    if self.clear_timer is not None: self.clear_timer.cancel()
+                    self.clear_timer = threading.Timer(4.0, self._clear_file)
+                    self.clear_timer.start()
 
                 if not recording:
                     continue
@@ -133,6 +150,8 @@ class SpeechRecognizer:
                     if speech_chunks
                     else 0.0
                 )
+
+
                 should_finalize = bool(vad_event and "end" in vad_event)
                 should_finalize = (
                     should_finalize or speech_seconds >= self.config.max_speech_seconds
@@ -140,6 +159,11 @@ class SpeechRecognizer:
 
                 if not should_finalize:
                     continue
+                # else:
+                #     with open(f"recognized_speech.txt", "w", encoding="utf-8") as f:  f.write(f"...========...")
+                #     if self.clear_timer is not None: self.clear_timer.cancel()
+                #     self.clear_timer = threading.Timer(4.0, self._clear_file)
+                #     self.clear_timer.start()
 
                 audio = np.concatenate(speech_chunks) if speech_chunks else np.array([])
                 speech_chunks = []
@@ -152,9 +176,21 @@ class SpeechRecognizer:
 
                 text = self.transcribe(audio)
                 if text:
+
+                    # 텍스트를 파일에 쓰기
+                    current_time = time.strftime("%H:%M:%S")
+                    with open(f"recognized_speech.txt", "w", encoding="utf-8") as f:  f.write(f"[{current_time}] {text}")
+                    if self.clear_timer is not None: self.clear_timer.cancel()
+                    print("speech_seconds:", speech_seconds)
+                    
+                    # 몇 초 후에 clear_file 함수를 백그라운드에서 실행하도록 설정
+                    self.clear_timer = threading.Timer(4.0, self._clear_file)
+                    self.clear_timer.start()
                     yield text
 
+
         finally:
+            if self.clear_timer is not None: self.clear_timer.cancel()
             self._stop_recorder(recorder)
 
     def transcribe(self, audio: np.ndarray) -> str:
@@ -232,14 +268,15 @@ class SpeechRecognizer:
     def _samples_from_ms(milliseconds: int) -> int:
         return int((milliseconds / 1000) * SAMPLE_RATE)
 
-    def _print_level(self, audio: np.ndarray, recording: bool) -> None:
+    def _print_level(self, audio: np.ndarray, recording: bool, listening_end: bool) -> None:
         if not self.config.show_level:
             return
 
         now = time.monotonic()
         interval_seconds = self.config.level_interval_ms / 1000
         if now - self._last_level_time < interval_seconds:
-            return
+            if not listening_end:
+                return
         self._last_level_time = now
 
         rms = float(np.sqrt(np.mean(np.square(audio), dtype=np.float64)))
@@ -247,7 +284,13 @@ class SpeechRecognizer:
         normalized = min(1.0, max(0.0, (dbfs + 60.0) / 60.0))
         filled = int(normalized * 24)
         meter = "#" * filled + "-" * (24 - filled)
-        state = "speech" if recording else "idle"
+        # state = "speech" if recording else "idle"
+        if not recording:
+            state = "idle"
+        elif listening_end:
+            state = "listening_end"
+        else: state = "speech"
+
         print(
             f"\r[recognize_speech] level {dbfs:6.1f} dBFS [{meter}] {state}",
             end="",
