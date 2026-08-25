@@ -12,8 +12,8 @@ from utils import tool_conversion_mcp_vllm
 class InferenceNode:
     def __init__(
         self,
-        mcp_server: str = "server.py",
-        transport: str = "stdio",
+        mcp_server: str = "http://127.0.0.1:8000/mcp",
+        transport: str = "streamable-http",
         input_source: str = "text",
         speech_host: str = "127.0.0.1",
         speech_port: int = 8765,
@@ -169,8 +169,8 @@ def parse_args():
     parser.add_argument(
         "--transport",
         choices=["stdio", "streamable-http"],
-        default="stdio",
-        help="MCP transport type. Use stdio for local server.py, or streamable-http for an already running MCP server.",
+        default="streamable-http",
+        help="MCP transport type (default: streamable-http). Use stdio to launch server.py as a subprocess.",
     )
     parser.add_argument(
         "--mcp-server",
@@ -229,4 +229,3 @@ if __name__ == '__main__':
     #     # 연속적인 에러 폭발로 인한 시스템 과부하 방지를 위해 5초 대기 후 재시작
     #     print("\n🔄 Restarting engine in 5 seconds...")
     #     time.sleep(5)
-

@@ -10,7 +10,7 @@ class MCPClient:
     def __init__(
         self,
         server: str,
-        transport: Literal["stdio", "streamable-http"] = "stdio",
+        transport: Literal["stdio", "streamable-http"] = "streamable-http",
     ):
         self.server = server
         self.transport = transport
@@ -33,7 +33,7 @@ class MCPClient:
     async def _connect_stdio(self):
         server_params = StdioServerParameters(
             command="uv",
-            args=["run", self.server],
+            args=["run", self.server, "--transport", "stdio"],
             env=os.environ.copy(),
         )
         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))

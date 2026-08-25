@@ -307,8 +307,8 @@ def main():
     parser.add_argument(
         "--transport",
         choices=["stdio", "streamable-http"],
-        default="stdio",
-        help="MCP transport type (default: stdio)"
+        default="streamable-http",
+        help="MCP transport type (default: streamable-http)"
     )
     parser.add_argument(
         "--host",
